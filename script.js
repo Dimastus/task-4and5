@@ -1,11 +1,12 @@
 'use strict';
 
 let iframe = document.querySelector('iframe'),
+    domain = 'https://dimastus.github.io',
+    // domain = 'http://localstorage-for-virtual-users',
     listCallbacks = {};
 
 document.querySelector('#set').addEventListener('click', () => {
     let user = {
-        action: 'set',
         username: prompt('Enter the username', 'John'),
         phone: prompt('Enter the number phone', '111-22-33'),
         email: prompt('Enter the email', 'john@domain.com'),
@@ -14,12 +15,13 @@ document.querySelector('#set').addEventListener('click', () => {
         address: prompt('Enter the address', 'st. Madison 124'),
         img: prompt('Choose img', 'file IMG'),
         dateReg: new Date().toLocaleString('ru-RU').replace(/,/, ''),
-        dateUpd: 'not updated'
+        dateUpd: 'not updated',
+        action: 'set'
     };
 
-    isCallback(user);
+    isCallback(user, (data) => console.log('after SET: this is call of callback ' + data));
 
-    iframe.contentWindow.postMessage(JSON.stringify(user), 'https://dimastus.github.io');
+    iframe.contentWindow.postMessage(JSON.stringify(user), domain);
 });
 
 document.querySelector('#get').addEventListener('click', () => {
@@ -28,7 +30,9 @@ document.querySelector('#get').addEventListener('click', () => {
         email: prompt('Enter the email', 'john@domain.com')
     };
 
-    iframe.contentWindow.postMessage(JSON.stringify(user), 'https://dimastus.github.io');
+    isCallback(user, (data) => console.log('after GET: this is call of callback ' + data));
+
+    iframe.contentWindow.postMessage(JSON.stringify(user), domain);
 });
 
 document.querySelector('#del').addEventListener('click', () => {
@@ -37,37 +41,31 @@ document.querySelector('#del').addEventListener('click', () => {
         email: prompt('Enter the email', 'john@domain.com')
     };
 
-    iframe.contentWindow.postMessage(JSON.stringify(user), 'https://dimastus.github.io');
+    isCallback(user, (data) => console.log('after DEL: this is call of callback ' + data));
+
+    iframe.contentWindow.postMessage(JSON.stringify(user), domain);
 });
 
+function isCallback(obj, cb) {
+    if (cb) {
+        obj.callback = true;
+        listCallbacks[obj.email] = cb;
+    } else {
+        obj.callback = false;
+    }
+}
+
 window.addEventListener('message', (e) => {
-    if (e.origin != 'https://dimastus.github.io') {
+    if (e.origin != domain) {
         console.log('чужой домен');
         return;
     }
 
-    const parseData = (data) => {
-        return JSON.parse(data);
-    };
+    let { callback, email } = JSON.parse(e.data);
 
-    let { action, callback, ...props } = parseData(e.data);
-
-    if (action == 'set') {
-        console.log(`written: key --> ${props.email}`);
-        if (callback) listCallbacks[props.email];
-    } else if (action == 'get') {
-        console.dir(`gotten data: ${JSON.parse(props)}`);
-        if (callback) listCallbacks[props.email];
-    } else if (action == 'del') {
-        console.log(`removed: key --> ${props.email}`);
-        if (callback) listCallbacks[props.email];
+    if (callback) {
+        listCallbacks[email](e.data);
     } else {
-        console.log('something wrong ' + props);
+        console.log('something wrong ' + e.data);
     }
 });
-
-function isCallback(obj) {
-    const cb = confirm('is callback?');
-    obj.callback = cb;
-    if (cb) listCallbacks[obj.email] = () => alert('this is call of callback ' + obj.email);
-}

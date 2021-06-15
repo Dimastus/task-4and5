@@ -23,25 +23,21 @@ document.querySelector('#set').addEventListener('click', () => {
 });
 
 document.querySelector('#get').addEventListener('click', () => {
-    let user = JSON.stringify({
+    let user = {
         action: 'get',
         email: prompt('Enter the email', 'john@domain.com')
-    });
+    };
 
-    isCallback(user);
-
-    iframe.contentWindow.postMessage(user, 'https://dimastus.github.io');
+    iframe.contentWindow.postMessage(JSON.stringify(user), 'https://dimastus.github.io');
 });
 
 document.querySelector('#del').addEventListener('click', () => {
-    let user = JSON.stringify({
+    let user = {
         action: 'del',
         email: prompt('Enter the email', 'john@domain.com')
-    });
+    };
 
-    isCallback(user);
-
-    iframe.contentWindow.postMessage(user, 'https://dimastus.github.io');
+    iframe.contentWindow.postMessage(JSON.stringify(user), 'https://dimastus.github.io');
 });
 
 window.addEventListener('message', (e) => {
